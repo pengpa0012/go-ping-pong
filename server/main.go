@@ -51,6 +51,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Client connected: %s\n", client.ClientID)
 	clients[conn] = client
 
+	// Handle client disconnection
+	defer func() {
+		// Remove client from the map when the connection is closed
+		delete(clients, conn)
+
+		// Notify other clients in the same room about the disconnection
+		if client.RoomID != 0 {
+				message := fmt.Sprintf("Client %v left room %v\n", client.ClientID, client.RoomID)
+				broadcastGameData(client.RoomID, websocket.TextMessage, []byte(message))
+		}
+	}()
+
 
 	for {
     messageType, p, err := conn.ReadMessage()
@@ -63,14 +75,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		
 		clientMessage := string(p)
 		if strings.Contains(clientMessage, "ROOM ID") {
-			// enter on a room
-			// check room capacity
-			// get all clients, filter out the room id base on user input
-			// check if less than 2 are connected
-			// if yes set the room id to client
-			// else reject message
 			roomID, err := strconv.Atoi(strings.Split(clientMessage, ":")[1])
-
 			if err != nil {
 				fmt.Println("Error Room ID")
 				return
