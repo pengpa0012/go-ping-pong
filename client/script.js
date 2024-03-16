@@ -1,3 +1,4 @@
+const roomInput = document.querySelector(".room-input")
 const socket = new WebSocket("ws://localhost:8080/");
 
 socket.onopen = function(event) {
@@ -16,3 +17,11 @@ socket.onerror = function(error) {
 socket.onclose = function(event) {
   console.log("WebSocket connection closed.");
 };
+
+roomInput.addEventListener("keydown", e => {
+  if(e.key !== "Enter") return
+  socket.send(`ROOM ID: ${roomInput.value}`);
+  roomInput.value = ""
+  roomInput.classList.add("hidden")
+})
+

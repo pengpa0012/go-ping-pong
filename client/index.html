@@ -5,8 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ping Pong</title>
   <script src="./script.js" defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-  <canvas></canvas>
+  <div class="max-w-7xl mx-auto px-5 py-12">
+    <input type="text" placeholder="Enter Room ID" class="mb-4 border focus:outline-none rounded-md p-2 w-full room-input">
+    <canvas class="border w-full rounded-md"></canvas>
+  </div>
 </body>
 </html>
