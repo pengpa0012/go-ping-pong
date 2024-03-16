@@ -26,6 +26,11 @@ type Client struct {
 	RoomID int
 }
 
+type GameData struct {
+	RoomID int
+	Data interface {}
+}
+
 var clients = make(map[*websocket.Conn]*Client)
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -89,25 +94,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			}
 
 		}	else {
-			// passing game data
-			// pass the room id on the client
-			// data, err := strconv.Atoi(strings.Split(clientMessage, ":")[1])
-
-			// if err != nil {
-			// 	fmt.Println("Error Game Data")
-			// 	return
-			// }
-
 			// Parse JSON data
-			var clientData Client
-			err = json.Unmarshal(p, &clientData)
-			if err != nil {
-					http.Error(w, "Failed to parse JSON", http.StatusBadRequest)
-					return
-			}
-
-			fmt.Println("Game Data", clientData)	
-			// broadcastGameData(data, messageType, p)
+			var gameData GameData
+			if err := json.Unmarshal([]byte(p), &gameData); err != nil {
+				fmt.Println(err)
+				return
+		 	}
+			broadcastGameData(gameData.RoomID, messageType, p)
 		}
 	}
 }
@@ -147,3 +140,5 @@ func main() {
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
+
+// add remove user on client if disconnect
