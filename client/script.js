@@ -60,6 +60,12 @@ function drawPaddle(x, type) {
   ctx.fillRect(x, Y, 50, 6)
 }
 
+function drawBall(x, y) {
+  ctx.beginPath();
+  ctx.arc(canvas.width / 2, canvas.height / 2, 5, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
 function handleKey (e) {
   const user = client.find(el => el.type == "user")
   // send a websocket here
@@ -92,14 +98,10 @@ window.addEventListener("keydown", handleKey)
 function animate() {
   requestAnimationFrame(animate)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
+  drawBall()
   client.forEach(element => {
     drawPaddle(element.paddleX, element.type)
   })
 }
 
 animate()
-
-
-// game data struct
-// RoomID int
-// Data interface {}
