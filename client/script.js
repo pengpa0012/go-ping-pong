@@ -18,6 +18,8 @@ socket.onmessage = function(event) {
   // if user entered a room (remove this if it disconnect)
   // roomInput.classList.add("hidden")
   // save room id to local storage if success
+
+  // get the other user game data here
 }
 
 socket.onerror = function(error) {
@@ -41,20 +43,24 @@ roomInput.addEventListener("keydown", e => {
 
 // test.addEventListener("click", () => socket.send(JSON.stringify({roomID: localStorage.getItem("roomID"), data: "test"})))
 
-function drawPaddle(x) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  if(x <= 0) {
-    ctx.fillRect(0, canvas.height - 50, 50, 6)
-    return
+function drawPaddle(x, type) {
+  if(type == "enemy") {
+    ctx.fillRect((canvas.width - 50) / 2, 50, 50, 6)
+  } else {
+    if(x <= 0) {
+      ctx.fillRect(0, canvas.height - 50, 50, 6)
+      return
+    }
+    if(x >= canvas.width - 50) {
+      ctx.fillRect(canvas.width - 50, canvas.height - 50, 50, 6)
+      return
+    }
+    ctx.fillRect(x, canvas.height - 50, 50, 6)
   }
-  if(x >= canvas.width - 50) {
-    ctx.fillRect(canvas.width - 50, canvas.height - 50, 50, 6)
-    return
-  }
-  ctx.fillRect(x, canvas.height - 50, 50, 6)
 }
 
 function handleKey (e) {
+  // send a websocket here
   if(e.key.toLowerCase() == "a" || e.key == "ArrowLeft") {
     paddleX -= 10
   }
@@ -65,9 +71,18 @@ function handleKey (e) {
 }
 
 window.addEventListener("keydown", handleKey)
+client = [{type: "enemy"},{type: "user"}]
 function animate() {
   requestAnimationFrame(animate)
-  drawPaddle(paddleX)
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  client.forEach(element => {
+    drawPaddle(paddleX, element.type)
+  })
 }
 
 animate()
+
+
+// game data struct
+// RoomID int
+// Data interface {}
