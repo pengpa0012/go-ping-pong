@@ -8,6 +8,7 @@ canvas.width = 600
 canvas.height = 600
 
 let paddleX = (canvas.width - 50) / 2
+const client = [{type: "enemy", paddleX},{type: "user", paddleX}]
 
 socket.onopen = function(event) {
   console.log("WebSocket connection established.")
@@ -18,7 +19,7 @@ socket.onmessage = function(event) {
   // if user entered a room (remove this if it disconnect)
   // roomInput.classList.add("hidden")
   // save room id to local storage if success
-
+  client.type == enemy 
   // get the other user game data here
 }
 
@@ -60,23 +61,33 @@ function drawPaddle(x, type) {
 }
 
 function handleKey (e) {
+  const user = client.find(el => el.type == "user")
   // send a websocket here
   if(e.key.toLowerCase() == "a" || e.key == "ArrowLeft") {
-    paddleX -= 10
+    user.paddleX -= 10
   }
 
   if(e.key.toLowerCase() == "d" || e.key == "ArrowRight") {
-    paddleX += 10
+    user.paddleX += 10
   }
+  
+  const gameData = {
+    roomID: localStorage.getItem("roomID"),
+    data: {
+      x: user.paddleX,
+      // add the ball data here as well
+    }
+  }
+  console.log(client)
+  // socket.send(JSON.stringify(gameData))
 }
 
 window.addEventListener("keydown", handleKey)
-client = [{type: "enemy"},{type: "user"}]
 function animate() {
   requestAnimationFrame(animate)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   client.forEach(element => {
-    drawPaddle(paddleX, element.type)
+    drawPaddle(element.paddleX, element.type)
   })
 }
 
