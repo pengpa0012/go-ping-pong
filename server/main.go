@@ -27,8 +27,8 @@ type Client struct {
 }
 
 type GameData struct {
-	RoomID int
-	Data interface {}
+	RoomID int `json:"roomID,string,omitempty"`
+	Data interface {} `json:"data,omitempty"`
 }
 
 var clients = make(map[*websocket.Conn]*Client)
@@ -59,7 +59,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		// Notify other clients in the same room about the disconnection
 		if client.RoomID != 0 {
 				message := fmt.Sprintf("Client %v left room %v\n", client.ClientID, client.RoomID)
-				broadcastGameData(client.RoomID, websocket.TextMessage, []byte(message))
+				broadcastGameData(client.RoomID, websocket.TextMessage, []byte(message), conn)
 		}
 	}()
 
@@ -71,8 +71,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-
-		
 		clientMessage := string(p)
 		if strings.Contains(clientMessage, "ROOM ID") {
 			roomID, err := strconv.Atoi(strings.Split(clientMessage, ":")[1])
@@ -105,7 +103,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				fmt.Println(err)
 				return
 		 	}
-			broadcastGameData(gameData.RoomID, messageType, p)
+			broadcastGameData(gameData.RoomID, messageType, p, conn)
 		}
 	}
 }
@@ -120,8 +118,13 @@ func countClientsInRoom(roomID int) int {
 	return count
 }
 
-func broadcastGameData(roomID int, messageType int, data []byte) {
+func broadcastGameData(roomID int, messageType int, data []byte, conn *websocket.Conn) {
 	for _, client := range clients {
+		// Skip sending the message to the sender's connection
+		if client.Conn == conn {
+			continue
+		}
+
 		if client.RoomID == roomID {
 			if err := client.Conn.WriteMessage(messageType, data); err != nil {
 				fmt.Println(err)
