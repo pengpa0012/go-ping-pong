@@ -19,8 +19,11 @@ socket.onmessage = function(event) {
   // if user entered a room (remove this if it disconnect)
   // roomInput.classList.add("hidden")
   // save room id to local storage if success
-  client.type == enemy 
   // get the other user game data here
+  if(event.data.includes("joined")) return
+  const gameData = JSON.parse(event.data)
+  const enemy = client.find(el => el.type == "enemy")
+  enemy.paddleX = gameData.data.x
 }
 
 socket.onerror = function(error) {
@@ -45,19 +48,16 @@ roomInput.addEventListener("keydown", e => {
 // test.addEventListener("click", () => socket.send(JSON.stringify({roomID: localStorage.getItem("roomID"), data: "test"})))
 
 function drawPaddle(x, type) {
-  if(type == "enemy") {
-    ctx.fillRect((canvas.width - 50) / 2, 50, 50, 6)
-  } else {
-    if(x <= 0) {
-      ctx.fillRect(0, canvas.height - 50, 50, 6)
-      return
-    }
-    if(x >= canvas.width - 50) {
-      ctx.fillRect(canvas.width - 50, canvas.height - 50, 50, 6)
-      return
-    }
-    ctx.fillRect(x, canvas.height - 50, 50, 6)
+  const Y = type == "enemy" ? 50 : canvas.height - 50
+  if(x <= 0) {
+    ctx.fillRect(0, Y, 50, 6)
+    return
   }
+  if(x >= canvas.width - 50) {
+    ctx.fillRect(canvas.width - 50, Y, 50, 6)
+    return
+  }
+  ctx.fillRect(x, Y, 50, 6)
 }
 
 function handleKey (e) {
@@ -65,21 +65,27 @@ function handleKey (e) {
   // send a websocket here
   if(e.key.toLowerCase() == "a" || e.key == "ArrowLeft") {
     user.paddleX -= 10
+    sendGameData(user.paddleX)
   }
-
   if(e.key.toLowerCase() == "d" || e.key == "ArrowRight") {
     user.paddleX += 10
+    sendGameData(user.paddleX)
   }
-  
+}
+
+function sendGameData(x) {
   const gameData = {
-    roomID: localStorage.getItem("roomID"),
+    RoomID: localStorage.getItem("roomID"),
     data: {
-      x: user.paddleX,
+      x,
       // add the ball data here as well
     }
   }
-  console.log(client)
-  // socket.send(JSON.stringify(gameData))
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify(gameData))
+  } else {
+    console.error('WebSocket connection is not open')
+  }
 }
 
 window.addEventListener("keydown", handleKey)
