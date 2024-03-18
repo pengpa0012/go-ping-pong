@@ -12,8 +12,10 @@ let ballPos = {
   x: canvas.width / 2,
   y: canvas.height / 2,
   down: true,
-  right: true
+  right: undefined,
+  xVal: 0,
 }
+
 const client = [{type: "enemy", paddleX},{type: "user", paddleX}]
 
 socket.onopen = function(event) {
@@ -76,11 +78,11 @@ function handleKey (e) {
   const user = client.find(el => el.type == "user")
   // send a websocket here
   if(e.key.toLowerCase() == "a" || e.key == "ArrowLeft") {
-    user.paddleX -= 10
+    user.paddleX -= 20
     sendGameData(user.paddleX)
   }
   if(e.key.toLowerCase() == "d" || e.key == "ArrowRight") {
-    user.paddleX += 10
+    user.paddleX += 20
     sendGameData(user.paddleX)
   }
 }
@@ -109,26 +111,33 @@ function animate() {
   const userPaddle = client.find(el => el.type == "user")
 
   if(ballPos.down) {
-    ballPos.y += 1
+    ballPos.y += 10
+    ballPos.x += ballPos.xVal
   } else {
-    ballPos.y -= 1
+    ballPos.y -= 10
+    ballPos.x += ballPos.xVal
   }
 
+  // check here the position of the ball relative to paddle
   if(ballPos.right == false) {
     ballPos.x -= 5
-  } 
+  }
 
   if(ballPos.right) {
     ballPos.x += 5
   }
 
-  // change this to if they overlap each other
+  // change ball x direction relative to paddle collision
   if(ballPos.y == canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
     ballPos.down = false
+    let percentage = Math.abs(ballPos.x - userPaddle.paddleX) / 25
+    ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
   }
 
   if(ballPos.y == 50 && !(ballPos.x > enemyPaddle.paddleX + 50) && !(enemyPaddle.paddleX + 50 > ballPos.x + 50)) {
     ballPos.down = true
+    let percentage = Math.abs(ballPos.x - enemyPaddle.paddleX) / 25
+    ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
   }
 
   if(ballPos.x == canvas.width) {
@@ -147,3 +156,5 @@ function animate() {
 }
 
 animate()
+
+// fixed paddle control
