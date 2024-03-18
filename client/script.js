@@ -10,10 +10,10 @@ canvas.height = 600
 let paddleX = (canvas.width - 50) / 2
 let ballPos = {
   x: canvas.width / 2,
-  y: canvas.height - 5,
+  y: canvas.height / 2,
   down: true
 }
-const client = [{type: "enemy", paddleX},{type: "user", paddleX}]
+const client = [{type: "enemy", paddleX: 0},{type: "user", paddleX}]
 
 socket.onopen = function(event) {
   console.log("WebSocket connection established.")
@@ -93,7 +93,7 @@ function sendGameData(x) {
     }
   }
   if (socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify(gameData))
+    // socket.send(JSON.stringify(gameData))
   } else {
     console.error('WebSocket connection is not open')
   }
@@ -103,7 +103,9 @@ window.addEventListener("keydown", handleKey)
 function animate() {
   requestAnimationFrame(animate)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  // ballPos.x += 10
+
+  const enemyPaddle = client.find(el => el.type == "enemy")
+  const userPaddle = client.find(el => el.type == "user")
 
   if(ballPos.down) {
     ballPos.y += 10
@@ -111,17 +113,17 @@ function animate() {
     ballPos.y -= 10
   }
 
-  if(ballPos.y >= canvas.height - 50) {
+  if(ballPos.y >= canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
     ballPos.down = false
   }
-  if(ballPos.y <= 50) {
+
+  if(ballPos.y <= 50 && !(ballPos.x > enemyPaddle.paddleX + 50) && !(enemyPaddle.paddleX + 50 > ballPos.x + 50)) {
     ballPos.down = true
   }
 
   drawBall(ballPos.x, ballPos.y)
  
   client.forEach(element => {
-    // console.log(element.paddleX, ballPos.x)
     drawPaddle(element.paddleX, element.type)
   })
 }
