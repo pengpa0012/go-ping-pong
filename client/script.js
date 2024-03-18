@@ -32,6 +32,7 @@ socket.onmessage = function(event) {
   const gameData = JSON.parse(event.data)
   const enemy = client.find(el => el.type == "enemy")
   enemy.paddleX = gameData.data.x
+  // check here if it is from enemy paddle or ball
 }
 
 socket.onerror = function(error) {
@@ -111,27 +112,18 @@ function animate() {
   const userPaddle = client.find(el => el.type == "user")
 
   if(ballPos.down) {
-    ballPos.y += 10
-    ballPos.x += ballPos.xVal
+    ballPos.y += 5
   } else {
-    ballPos.y -= 10
-    ballPos.x += ballPos.xVal
+    ballPos.y -= 5
   }
 
-  // check here the position of the ball relative to paddle
-  if(ballPos.right == false) {
-    ballPos.x -= 5
-  }
-
-  if(ballPos.right) {
-    ballPos.x += 5
-  }
+  ballPos.x += ballPos.right == undefined ? ballPos.xVal : ballPos.right ? 5 : -5
 
   // change ball x direction relative to paddle collision
   if(ballPos.y == canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
     ballPos.down = false
     let percentage = Math.abs(ballPos.x - userPaddle.paddleX) / 25
-    ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
+    ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 5
   }
 
   if(ballPos.y == 50 && !(ballPos.x > enemyPaddle.paddleX + 50) && !(enemyPaddle.paddleX + 50 > ballPos.x + 50)) {
@@ -140,11 +132,11 @@ function animate() {
     ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
   }
 
-  if(ballPos.x == canvas.width) {
+  if(ballPos.x >= canvas.width) {
     ballPos.right = false
   }
 
-  if(ballPos.x == 0) {
+  if(ballPos.x <= 0) {
     ballPos.right = true
   }
 
