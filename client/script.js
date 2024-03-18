@@ -8,6 +8,11 @@ canvas.width = 600
 canvas.height = 600
 
 let paddleX = (canvas.width - 50) / 2
+let ballPos = {
+  x: canvas.width / 2,
+  y: canvas.height - 5,
+  down: true
+}
 const client = [{type: "enemy", paddleX},{type: "user", paddleX}]
 
 socket.onopen = function(event) {
@@ -62,7 +67,7 @@ function drawPaddle(x, type) {
 
 function drawBall(x, y) {
   ctx.beginPath();
-  ctx.arc(canvas.width / 2, canvas.height / 2, 5, 0, 2 * Math.PI);
+  ctx.arc(x, y, 5, 0, 2 * Math.PI);
   ctx.fill();
 }
 
@@ -98,8 +103,25 @@ window.addEventListener("keydown", handleKey)
 function animate() {
   requestAnimationFrame(animate)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  drawBall()
+  // ballPos.x += 10
+
+  if(ballPos.down) {
+    ballPos.y += 10
+  } else {
+    ballPos.y -= 10
+  }
+
+  if(ballPos.y >= canvas.height - 50) {
+    ballPos.down = false
+  }
+  if(ballPos.y <= 50) {
+    ballPos.down = true
+  }
+
+  drawBall(ballPos.x, ballPos.y)
+ 
   client.forEach(element => {
+    // console.log(element.paddleX, ballPos.x)
     drawPaddle(element.paddleX, element.type)
   })
 }
