@@ -11,9 +11,10 @@ let paddleX = (canvas.width - 50) / 2
 let ballPos = {
   x: canvas.width / 2,
   y: canvas.height / 2,
-  down: true
+  down: true,
+  right: true
 }
-const client = [{type: "enemy", paddleX: 0},{type: "user", paddleX}]
+const client = [{type: "enemy", paddleX},{type: "user", paddleX}]
 
 socket.onopen = function(event) {
   console.log("WebSocket connection established.")
@@ -108,17 +109,34 @@ function animate() {
   const userPaddle = client.find(el => el.type == "user")
 
   if(ballPos.down) {
-    ballPos.y += 10
+    ballPos.y += 1
   } else {
-    ballPos.y -= 10
+    ballPos.y -= 1
   }
 
-  if(ballPos.y >= canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
+  if(ballPos.right == false) {
+    ballPos.x -= 5
+  } 
+
+  if(ballPos.right) {
+    ballPos.x += 5
+  }
+
+  // change this to if they overlap each other
+  if(ballPos.y == canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
     ballPos.down = false
   }
 
-  if(ballPos.y <= 50 && !(ballPos.x > enemyPaddle.paddleX + 50) && !(enemyPaddle.paddleX + 50 > ballPos.x + 50)) {
+  if(ballPos.y == 50 && !(ballPos.x > enemyPaddle.paddleX + 50) && !(enemyPaddle.paddleX + 50 > ballPos.x + 50)) {
     ballPos.down = true
+  }
+
+  if(ballPos.x == canvas.width) {
+    ballPos.right = false
+  }
+
+  if(ballPos.x == 0) {
+    ballPos.right = true
   }
 
   drawBall(ballPos.x, ballPos.y)
