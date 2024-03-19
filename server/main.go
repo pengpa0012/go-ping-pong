@@ -132,6 +132,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				fmt.Println(err)
 				return
 		 	}
+			fmt.Println(gameData.Data)
 			broadcastGameData(gameData.RoomID, messageType, p, conn)
 		}
 	}
@@ -175,7 +176,7 @@ func broadcastToOneClient(conn *websocket.Conn, messageType int, data []byte) {
 
 func main() {
 	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
 
 // add remove user on client if disconnect

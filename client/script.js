@@ -12,27 +12,34 @@ let ballPos = {
   x: canvas.width / 2,
   y: 50,
   down: true,
-  right: undefined,
+  right: null,
   xVal: 0,
 }
 
-let isHost = undefined
+let isHost = false
 let start = false
 
 const client = [{type: "enemy", paddleX},{type: "user", paddleX}]
+const enemyPaddle = client.find(el => el.type == "enemy")
+const userPaddle = client.find(el => el.type == "user")
 
 socket.onopen = function(event) {
   console.log("WebSocket connection established.")
 }
 
 socket.onmessage = function(event) {
-  // console.log("Message from server:", event.data)
+  console.log("Message from server:", event.data)
   // if user entered a room (remove this if it disconnect)
   // roomInput.classList.add("hidden")
   // save room id to local storage if success
   // get the other user game data here
   if(event.data.includes("joined")) {
     alert("Room Joined!")
+    return
+  }
+
+  if(event.data.includes("left")) {
+    alert("Other player disconnect")
     return
   }
 
@@ -56,16 +63,19 @@ socket.onmessage = function(event) {
   }
   const gameData = JSON.parse(event.data)
   const enemy = client.find(el => el.type == "enemy")
-  
-  if(gameData.data) {
+  if(gameData.data.type == "paddle") {
     console.log("PADDLE", gameData)
     enemy.paddleX = gameData.data.x
   } else {
     // check here what ball state changes (x,y,right,down,xVal)
-    console.log("BALL", gameData)
     // if host dont set this
     if(!isHost) {
-      ballPos = gameData
+      ballPos.x = gameData.data.x
+      ballPos.y = gameData.data.y
+      ballPos.down = gameData.data.down
+      ballPos.right = gameData.data.right
+      ballPos.xVal = gameData.data.xVal
+      ballMovement()
     }
   }
   // check here if it is from enemy paddle or ball
@@ -134,6 +144,7 @@ function sendGameData(x) {
   const gameData = {
     RoomID: localStorage.getItem("roomID"),
     data: {
+      type: "paddle",
       x,
     }
   }
@@ -149,16 +160,7 @@ function sendData(data) {
   }
 }
 
-window.addEventListener("keydown", handleKey)
-function animate() {
-  requestAnimationFrame(animate)
-  console.log(start)
-  if(!start) return
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-  const enemyPaddle = client.find(el => el.type == "enemy")
-  const userPaddle = client.find(el => el.type == "user")
-
+function ballMovement() {
   if(ballPos.down) {
     ballPos.y += 5
   } else {
@@ -166,7 +168,7 @@ function animate() {
   }
 
   // check bounce if relative to wall or paddle
-  ballPos.x += ballPos.right == undefined ? ballPos.xVal : ballPos.right ? 5 : -5
+  ballPos.x += ballPos.right == null ? ballPos.xVal : ballPos.right ? 5 : -5
 
   // change ball x direction relative to paddle collision
   if(ballPos.y == canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
@@ -188,11 +190,34 @@ function animate() {
   if(ballPos.x <= 0) {
     ballPos.right = true
   }
+}
+
+window.addEventListener("keydown", handleKey)
+function animate() {
+  requestAnimationFrame(animate)
+  if(!start) return
+  console.log(isHost)
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
   // send ball data
   // if not host dont send this data
   // if host send this
   if(isHost) {
-    sendData(JSON.stringify(ballPos))
+    ballMovement()
+    // reverse the data here
+    // log this
+    const reverseGameData = {
+      RoomID: localStorage.getItem("roomID"),
+      data: {
+        type: "ball",
+        x: ballPos.x,
+        y: ballPos.y * -1,
+        down: !ballPos.down,
+        right: ballPos.right == null ? null : !ballPos.right,
+        xVal: ballPos.xVal * -1,
+      }
+    }
+    sendData(JSON.stringify(reverseGameData))
   }
 
   drawBall(ballPos.x, ballPos.y)
