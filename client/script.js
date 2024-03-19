@@ -1,6 +1,6 @@
 const roomInput = document.querySelector(".room-input")
 const socket = new WebSocket("ws://localhost:8080/")
-const test = document.querySelector("button")
+const startBtn = document.querySelector(".start")
 const canvas = document.querySelector("canvas")
 const ctx = canvas.getContext("2d")
 
@@ -10,11 +10,14 @@ canvas.height = 600
 let paddleX = (canvas.width - 50) / 2
 let ballPos = {
   x: canvas.width / 2,
-  y: canvas.height / 2,
+  y: 50,
   down: true,
   right: undefined,
   xVal: 0,
 }
+
+let isHost = undefined
+let start = false
 
 const client = [{type: "enemy", paddleX},{type: "user", paddleX}]
 
@@ -23,15 +26,42 @@ socket.onopen = function(event) {
 }
 
 socket.onmessage = function(event) {
-  console.log("Message from server:", event.data)
+  // console.log("Message from server:", event.data)
   // if user entered a room (remove this if it disconnect)
   // roomInput.classList.add("hidden")
   // save room id to local storage if success
   // get the other user game data here
   if(event.data.includes("joined")) return
+
+  if(event.data.includes("full")) return
+
+  if(event.data.includes("start")) {
+    start = true
+    return
+  }
+
+  if(event.data.includes("host")) {
+    // set the client here to host
+    console.log("HOST", event.data)
+    isHost = true
+    startBtn.classList.remove("hidden")
+    return
+  }
+
   const gameData = JSON.parse(event.data)
   const enemy = client.find(el => el.type == "enemy")
-  enemy.paddleX = gameData.data.x
+  
+  if(gameData.data) {
+    console.log("PADDLE", gameData)
+    enemy.paddleX = gameData.data.x
+  } else {
+    // check here what ball state changes (x,y,right,down,xVal)
+    console.log("BALL", gameData)
+    // if host dont set this
+    if(!isHost) {
+      ballPos = gameData
+    }
+  }
   // check here if it is from enemy paddle or ball
 }
 
@@ -49,12 +79,18 @@ socket.onclose = function(event) {
 
 roomInput.addEventListener("keydown", e => {
   if(e.key !== "Enter") return
-  socket.send(`ROOM ID:${roomInput.value}`)
+
+  sendData(`ROOM ID:${roomInput.value}`)
   localStorage.setItem("roomID", roomInput.value)
   roomInput.value = ""
 })
 
-// test.addEventListener("click", () => socket.send(JSON.stringify({roomID: localStorage.getItem("roomID"), data: "test"})))
+startBtn.addEventListener("click", () => {
+  start = true
+  sendData("start game")
+  // send start game here
+  console.log(start)
+})
 
 function drawPaddle(x, type) {
   const Y = type == "enemy" ? 50 : canvas.height - 50
@@ -96,8 +132,13 @@ function sendGameData(x) {
       // add the ball data here as well
     }
   }
+
+  sendData(JSON.stringify(gameData))
+}
+
+function sendData(data) {
   if (socket.readyState === WebSocket.OPEN) {
-    // socket.send(JSON.stringify(gameData))
+    socket.send(data)
   } else {
     console.error('WebSocket connection is not open')
   }
@@ -106,6 +147,8 @@ function sendGameData(x) {
 window.addEventListener("keydown", handleKey)
 function animate() {
   requestAnimationFrame(animate)
+  console.log(start)
+  if(!start) return
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
   const enemyPaddle = client.find(el => el.type == "enemy")
@@ -117,6 +160,7 @@ function animate() {
     ballPos.y -= 5
   }
 
+  // check bounce if relative to wall or paddle
   ballPos.x += ballPos.right == undefined ? ballPos.xVal : ballPos.right ? 5 : -5
 
   // change ball x direction relative to paddle collision
@@ -139,6 +183,12 @@ function animate() {
   if(ballPos.x <= 0) {
     ballPos.right = true
   }
+  // send ball data
+  // if not host dont send this data
+  // if host send this
+  if(isHost) {
+    sendData(JSON.stringify(ballPos))
+  }
 
   drawBall(ballPos.x, ballPos.y)
  
@@ -150,3 +200,6 @@ function animate() {
 animate()
 
 // fixed paddle control
+// fixed game sync
+// fixed ball initial position
+// add start game

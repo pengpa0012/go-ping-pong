@@ -58,6 +58,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		// Notify other clients in the same room about the disconnection
 		if client.RoomID != 0 {
+				// restart game state here
 				message := fmt.Sprintf("Client %v left room %v\n", client.ClientID, client.RoomID)
 				broadcastGameData(client.RoomID, websocket.TextMessage, []byte(message), conn)
 		}
@@ -72,6 +73,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
     }
 
 		clientMessage := string(p)
+
+		if strings.Contains(clientMessage, "start") {
+			for _, client := range clients {
+				if client.Conn != conn {
+					if err := client.Conn.WriteMessage(messageType, []byte("start game")); err != nil {
+						fmt.Println(err)
+					}
+				}
+			}
+		}
 		if strings.Contains(clientMessage, "ROOM ID") {
 			roomID, err := strconv.Atoi(strings.Split(clientMessage, ":")[1])
 			if err != nil {
@@ -91,6 +102,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				}
 			} else {
 				// Assign room ID to client
+				if countClientsInRoom(roomID) == 0 {
+					for _, client := range clients {
+						if client.Conn == conn {
+							if err := client.Conn.WriteMessage(messageType, []byte("Your are the host.")); err != nil {
+								fmt.Println(err)
+							}
+						}
+					}
+				}
+
 				client.RoomID = roomID
 				message := fmt.Sprintf("Client %v joined room %v\n", client.ClientID, client.RoomID)
 				broadcastToOneClient(conn, messageType, []byte(message))
