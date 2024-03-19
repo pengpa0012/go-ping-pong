@@ -31,12 +31,19 @@ socket.onmessage = function(event) {
   // roomInput.classList.add("hidden")
   // save room id to local storage if success
   // get the other user game data here
-  if(event.data.includes("joined")) return
+  if(event.data.includes("joined")) {
+    alert("Room Joined!")
+    return
+  }
 
-  if(event.data.includes("full")) return
+  if(event.data.includes("full")) {
+    alert("Room is full!")
+    return
+  }
 
   if(event.data.includes("start")) {
     start = true
+    // alert("Game Start!")
     return
   }
 
@@ -47,7 +54,6 @@ socket.onmessage = function(event) {
     startBtn.classList.remove("hidden")
     return
   }
-
   const gameData = JSON.parse(event.data)
   const enemy = client.find(el => el.type == "enemy")
   
@@ -87,7 +93,7 @@ roomInput.addEventListener("keydown", e => {
 
 startBtn.addEventListener("click", () => {
   start = true
-  sendData("start game")
+  sendData(`start game :${localStorage.getItem("roomID")}`)
   // send start game here
   console.log(start)
 })
@@ -129,7 +135,6 @@ function sendGameData(x) {
     RoomID: localStorage.getItem("roomID"),
     data: {
       x,
-      // add the ball data here as well
     }
   }
 
