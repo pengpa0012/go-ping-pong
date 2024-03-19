@@ -75,15 +75,23 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		clientMessage := string(p)
 
 		if strings.Contains(clientMessage, "start") {
+			roomID, err := strconv.Atoi(strings.Split(clientMessage, ":")[1])
+
+			fmt.Println(roomID, clientMessage)
+
+			if err != nil {
+				fmt.Println("Error Getting Room ID")
+				return
+			}
+
 			for _, client := range clients {
-				if client.Conn != conn {
+				if client.Conn != conn && client.RoomID == roomID {
 					if err := client.Conn.WriteMessage(messageType, []byte("start game")); err != nil {
 						fmt.Println(err)
 					}
 				}
 			}
-		}
-		if strings.Contains(clientMessage, "ROOM ID") {
+		} else if strings.Contains(clientMessage, "ROOM ID") {
 			roomID, err := strconv.Atoi(strings.Split(clientMessage, ":")[1])
 			if err != nil {
 				fmt.Println("Error Room ID")
