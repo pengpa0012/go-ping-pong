@@ -73,7 +73,7 @@ socket.onmessage = function(event) {
   const enemy = client.find(el => el.type == "enemy")
   if(gameData.data.type == "paddle") {
     console.log("PADDLE", gameData)
-    enemy.paddleX = gameData.data.x
+    enemy.paddleX += gameData.data.x
   }
 }
 
@@ -128,11 +128,11 @@ function handleKey (e) {
   // send a websocket here
   if(e.key.toLowerCase() == "a" || e.key == "ArrowLeft") {
     user.paddleX -= 20
-    sendGameData(user.paddleX)
+    sendGameData(20)
   }
   if(e.key.toLowerCase() == "d" || e.key == "ArrowRight") {
-    user.paddleX += 20
-    sendGameData(user.paddleX)
+    user.paddleX += 20 
+    sendGameData(-20)
   }
 }
 
@@ -159,13 +159,13 @@ function sendData(data) {
 function ballMovement() {
   if(isHost) {
     if(ballPos.down) {
-      ballPos.y += 5
+      ballPos.y += 2
     } else {
-      ballPos.y -= 5
+      ballPos.y -= 2
     }
   
     // check bounce if relative to wall or paddle
-    ballPos.x += ballPos.right == null ? ballPos.xVal : ballPos.right ? 5 : -5
+    ballPos.x += ballPos.right == null ? ballPos.xVal : ballPos.right ? 2 : -2
   
     // change ball x direction relative to paddle collision
     if(ballPos.y == canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
@@ -190,13 +190,13 @@ function ballMovement() {
     drawBall(ballPos.x, ballPos.y)
   } else {
     if(reverseBallPos.down) {
-      reverseBallPos.y -= 5
+      reverseBallPos.y -= 2
     } else {
-      reverseBallPos.y += 5
+      reverseBallPos.y += 2
     }
   
     // check bounce if relative to wall or paddle
-    reverseBallPos.x += reverseBallPos.right == null ? reverseBallPos.xVal : reverseBallPos.right ? 5 : -5
+    reverseBallPos.x += reverseBallPos.right == null ? reverseBallPos.xVal : reverseBallPos.right ? 2 : -2
   
     // change ball x direction relative to paddle collision
     if(reverseBallPos.y == canvas.height - 50 && !(reverseBallPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > reverseBallPos.x + 50)) {
