@@ -10,7 +10,15 @@ canvas.height = 600
 let paddleX = (canvas.width - 50) / 2
 let ballPos = {
   x: canvas.width / 2,
-  y: 50,
+  y: canvas.height / 2,
+  down: true,
+  right: null,
+  xVal: 0,
+}
+
+let reverseBallPos = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
   down: true,
   right: null,
   xVal: 0,
@@ -66,19 +74,7 @@ socket.onmessage = function(event) {
   if(gameData.data.type == "paddle") {
     console.log("PADDLE", gameData)
     enemy.paddleX = gameData.data.x
-  } else {
-    // check here what ball state changes (x,y,right,down,xVal)
-    // if host dont set this
-    if(!isHost) {
-      ballPos.x = gameData.data.x
-      ballPos.y = gameData.data.y
-      ballPos.down = gameData.data.down
-      ballPos.right = gameData.data.right
-      ballPos.xVal = gameData.data.xVal
-      ballMovement()
-    }
   }
-  // check here if it is from enemy paddle or ball
 }
 
 socket.onerror = function(error) {
@@ -161,35 +157,70 @@ function sendData(data) {
 }
 
 function ballMovement() {
-  if(ballPos.down) {
-    ballPos.y += 5
+  if(isHost) {
+    if(ballPos.down) {
+      ballPos.y += 5
+    } else {
+      ballPos.y -= 5
+    }
+  
+    // check bounce if relative to wall or paddle
+    ballPos.x += ballPos.right == null ? ballPos.xVal : ballPos.right ? 5 : -5
+  
+    // change ball x direction relative to paddle collision
+    if(ballPos.y == canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
+      ballPos.down = false
+      let percentage = Math.abs(ballPos.x - userPaddle.paddleX) / 25
+      ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
+    }
+  
+    if(ballPos.y == 50 && !(ballPos.x > enemyPaddle.paddleX + 50) && !(enemyPaddle.paddleX + 50 > ballPos.x + 50)) {
+      ballPos.down = true
+      let percentage = Math.abs(ballPos.x - enemyPaddle.paddleX) / 25
+      ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
+    }
+  
+    if(ballPos.x >= canvas.width) {
+      ballPos.right = false
+    }
+  
+    if(ballPos.x <= 0) {
+      ballPos.right = true
+    }
+    drawBall(ballPos.x, ballPos.y)
   } else {
-    ballPos.y -= 5
+    if(reverseBallPos.down) {
+      reverseBallPos.y -= 5
+    } else {
+      reverseBallPos.y += 5
+    }
+  
+    // check bounce if relative to wall or paddle
+    reverseBallPos.x += reverseBallPos.right == null ? reverseBallPos.xVal : reverseBallPos.right ? 5 : -5
+  
+    // change ball x direction relative to paddle collision
+    if(reverseBallPos.y == canvas.height - 50 && !(reverseBallPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > reverseBallPos.x + 50)) {
+      reverseBallPos.down = true
+      let percentage = Math.abs(reverseBallPos.x - userPaddle.paddleX) / 25
+      reverseBallPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
+    }
+  
+    if(reverseBallPos.y == 50 && !(reverseBallPos.x > enemyPaddle.paddleX + 50) && !(enemyPaddle.paddleX + 50 > reverseBallPos.x + 50)) {
+      reverseBallPos.down = false
+      let percentage = Math.abs(reverseBallPos.x - enemyPaddle.paddleX) / 25
+      reverseBallPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
+    }
+  
+    if(reverseBallPos.x >= canvas.width) {
+      reverseBallPos.right = false
+    }
+  
+    if(reverseBallPos.x <= 0) {
+      reverseBallPos.right = true
+    }
+    drawBall(reverseBallPos.x, reverseBallPos.y)
   }
-
-  // check bounce if relative to wall or paddle
-  ballPos.x += ballPos.right == null ? ballPos.xVal : ballPos.right ? 5 : -5
-
-  // change ball x direction relative to paddle collision
-  if(ballPos.y == canvas.height - 50 && !(ballPos.x > userPaddle.paddleX + 50) && !(userPaddle.paddleX + 50 > ballPos.x + 50)) {
-    ballPos.down = false
-    let percentage = Math.abs(ballPos.x - userPaddle.paddleX) / 25
-    ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 5
-  }
-
-  if(ballPos.y == 50 && !(ballPos.x > enemyPaddle.paddleX + 50) && !(enemyPaddle.paddleX + 50 > ballPos.x + 50)) {
-    ballPos.down = true
-    let percentage = Math.abs(ballPos.x - enemyPaddle.paddleX) / 25
-    ballPos.xVal = percentage == 1 ? 0 : (percentage < 1 ? percentage - 2 : percentage) * 0.8
-  }
-
-  if(ballPos.x >= canvas.width) {
-    ballPos.right = false
-  }
-
-  if(ballPos.x <= 0) {
-    ballPos.right = true
-  }
+  
 }
 
 window.addEventListener("keydown", handleKey)
@@ -202,25 +233,7 @@ function animate() {
   // send ball data
   // if not host dont send this data
   // if host send this
-  if(isHost) {
-    ballMovement()
-    // reverse the data here
-    // log this
-    const reverseGameData = {
-      RoomID: localStorage.getItem("roomID"),
-      data: {
-        type: "ball",
-        x: ballPos.x,
-        y: ballPos.y * -1,
-        down: !ballPos.down,
-        right: ballPos.right == null ? null : !ballPos.right,
-        xVal: ballPos.xVal * -1,
-      }
-    }
-    sendData(JSON.stringify(reverseGameData))
-  }
-
-  drawBall(ballPos.x, ballPos.y)
+  ballMovement()
  
   client.forEach(element => {
     drawPaddle(element.paddleX, element.type)
