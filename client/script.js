@@ -2,6 +2,7 @@ const roomInput = document.querySelector(".room-input")
 const socket = new WebSocket("ws://localhost:8080/")
 const startBtn = document.querySelector(".start")
 const canvas = document.querySelector("canvas")
+const counterText = document.querySelector(".counter")
 const ctx = canvas.getContext("2d")
 
 canvas.width = 600
@@ -61,9 +62,17 @@ socket.onmessage = function(event) {
   }
 
   if(event.data.includes("start")) {
+    let counter = 6
+    counterText.classList.remove("hidden")
+    const tick = setInterval(() => {
+      counter--
+      counterText.textContent = counter == 0 ? "Start" : counter
+    }, 1000)
     setTimeout(() => {
       start = true
-    }, 5000)
+      counterText.classList.add("hidden")
+      clearInterval(tick)
+    }, 5500)
     // alert("Game Start!")
     return
   }
@@ -104,9 +113,19 @@ roomInput.addEventListener("keydown", e => {
 })
 
 startBtn.addEventListener("click", () => {
+  let counter = 6
+  counterText.classList.remove("hidden")
+  startBtn.classList.add("hidden")
+  const tick = setInterval(() => {
+    counter--
+    counterText.textContent = counter == 0 ? "Start" : counter
+  }, 1000)
   setTimeout(() => {
     start = true
-  }, 5000)
+    counterText.classList.add("hidden")
+    startBtn.classList.add("hidden")
+    clearInterval(tick)
+  }, 5500)
   sendData(`start game :${localStorage.getItem("roomID")}`)
 })
 
