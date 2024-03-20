@@ -61,7 +61,9 @@ socket.onmessage = function(event) {
   }
 
   if(event.data.includes("start")) {
-    start = true
+    setTimeout(() => {
+      start = true
+    }, 5000)
     // alert("Game Start!")
     return
   }
@@ -102,7 +104,9 @@ roomInput.addEventListener("keydown", e => {
 })
 
 startBtn.addEventListener("click", () => {
-  start = true
+  setTimeout(() => {
+    start = true
+  }, 5000)
   sendData(`start game :${localStorage.getItem("roomID")}`)
 })
 
