@@ -38,16 +38,20 @@ socket.onopen = function(event) {
 socket.onmessage = function(event) {
   console.log("Message from server:", event.data)
   // if user entered a room (remove this if it disconnect)
-  // roomInput.classList.add("hidden")
   // save room id to local storage if success
   // get the other user game data here
   if(event.data.includes("joined")) {
     alert("Room Joined!")
+    roomInput.classList.add("hidden")
+    canvas.classList.remove("hidden")
     return
   }
 
   if(event.data.includes("left")) {
     alert("Other player disconnect")
+    roomInput.classList.remove("hidden")
+    canvas.classList.add("hidden")
+    start = false
     return
   }
 
@@ -204,6 +208,3 @@ function animate() {
 animate()
 
 // fixed paddle control
-// fixed game sync
-// fixed ball initial position
-// add start game
