@@ -27,6 +27,7 @@ let reverseBallPos = {
 
 let isHost = false
 let start = false
+let roomID
 
 const client = [{type: "enemy", paddleX},{type: "user", paddleX}]
 const enemyPaddle = client.find(el => el.type == "enemy")
@@ -95,20 +96,20 @@ socket.onmessage = function(event) {
 socket.onerror = function(error) {
   console.error("WebSocket error:", error)
   // remove the room id here
-  localStorage.removeItem("roomID")
+  roomID = ""
 }
 
 socket.onclose = function(event) {
   console.log("WebSocket connection closed.")
   // remove the room id here
-  localStorage.removeItem("roomID")
+  roomID = ""
 }
 
 roomInput.addEventListener("keydown", e => {
   if(e.key !== "Enter") return
 
   sendData(`ROOM ID:${roomInput.value}`)
-  localStorage.setItem("roomID", roomInput.value)
+  roomID = roomInput.value
   roomInput.value = ""
 })
 
@@ -126,7 +127,7 @@ startBtn.addEventListener("click", () => {
     startBtn.classList.add("hidden")
     clearInterval(tick)
   }, 5500)
-  sendData(`start game :${localStorage.getItem("roomID")}`)
+  sendData(`start game :${roomID}`)
 })
 
 function drawPaddle(x, type) {
@@ -163,7 +164,7 @@ function handleKey (e) {
 
 function sendGameData(x) {
   const gameData = {
-    RoomID: localStorage.getItem("roomID"),
+    RoomID: roomID,
     data: {
       type: "paddle",
       x,
@@ -218,9 +219,7 @@ window.addEventListener("keydown", handleKey)
 function animate() {
   requestAnimationFrame(animate)
   if(!start) return
-  console.log(isHost)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-
   ballMovement(isHost ? ballPos: reverseBallPos)
  
   client.forEach(element => {
