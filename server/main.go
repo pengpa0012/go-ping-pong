@@ -77,8 +77,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(clientMessage, "start") {
 			roomID, err := strconv.Atoi(strings.Split(clientMessage, ":")[1])
 
-			fmt.Println(roomID, clientMessage)
-
 			if err != nil {
 				fmt.Println("Error Getting Room ID")
 				return
@@ -99,6 +97,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// Check room capacity
+			// notify here if room id already has two client
 			if countClientsInRoom(roomID) >= 2 {
 				// Reject connection if more than 2 clients are already in the room
 				for _, client := range clients {
@@ -120,6 +119,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
+				if countClientsInRoom(roomID) == 1 {
+					for _, client := range clients {
+						if client.RoomID == roomID {
+							if err := client.Conn.WriteMessage(messageType, []byte("show button")); err != nil {
+								fmt.Println(err)
+							}
+						}
+					}
+				}
+
 				client.RoomID = roomID
 				message := fmt.Sprintf("Client %v joined room %v\n", client.ClientID, client.RoomID)
 				broadcastToOneClient(conn, messageType, []byte(message))
@@ -132,7 +141,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				fmt.Println(err)
 				return
 		 	}
-			fmt.Println(gameData.Data)
 			broadcastGameData(gameData.RoomID, messageType, p, conn)
 		}
 	}
@@ -179,4 +187,4 @@ func main() {
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
 
-// add remove user on client if disconnect
+// fixed paddle data 

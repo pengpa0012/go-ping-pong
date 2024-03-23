@@ -53,8 +53,9 @@ socket.onmessage = function(event) {
   if(event.data.includes("left")) {
     alert("Other player disconnect")
     roomInput.classList.remove("hidden")
-    roomCounterText.textContent = "Client Connected: 1/2"
     canvas.classList.add("hidden")
+    startBtn.classList.add("hidden")
+    roomCounterText.classList.add("hidden")
     start = false
     return
   }
@@ -68,7 +69,6 @@ socket.onmessage = function(event) {
     if(isHost) {
       startBtn.classList.remove("hidden")
     }
-    console.log("Aweaweaw")
     roomCounterText.classList.remove("hidden")
     roomCounterText.textContent = "Client Connected: 2/2"
     return
