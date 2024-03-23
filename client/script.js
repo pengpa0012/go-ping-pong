@@ -3,6 +3,7 @@ const socket = new WebSocket("ws://localhost:8080/")
 const startBtn = document.querySelector(".start")
 const canvas = document.querySelector("canvas")
 const counterText = document.querySelector(".counter")
+const roomCounterText = document.querySelector(".room-counter")
 const ctx = canvas.getContext("2d")
 
 canvas.width = 600
@@ -52,6 +53,7 @@ socket.onmessage = function(event) {
   if(event.data.includes("left")) {
     alert("Other player disconnect")
     roomInput.classList.remove("hidden")
+    roomCounterText.textContent = "Client Connected: 1/2"
     canvas.classList.add("hidden")
     start = false
     return
@@ -62,6 +64,17 @@ socket.onmessage = function(event) {
     return
   }
 
+  if(event.data.includes("show")) {
+    if(isHost) {
+      startBtn.classList.remove("hidden")
+    }
+    console.log("Aweaweaw")
+    roomCounterText.classList.remove("hidden")
+    roomCounterText.textContent = "Client Connected: 2/2"
+    return
+  }
+
+  
   if(event.data.includes("start")) {
     let counter = 6
     counterText.classList.remove("hidden")
@@ -81,8 +94,9 @@ socket.onmessage = function(event) {
   if(event.data.includes("host")) {
     // set the client here to host
     console.log("HOST", event.data)
+    roomCounterText.classList.remove("hidden")
+    roomCounterText.textContent = "Client Connected: 1/2"
     isHost = true
-    startBtn.classList.remove("hidden")
     return
   }
   const gameData = JSON.parse(event.data)
